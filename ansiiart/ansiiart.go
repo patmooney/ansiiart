@@ -34,59 +34,38 @@ func Transform ( reader io.Reader, resolution int ) string {
     }
 
     bounds := img.Bounds();
-    var propW float64 = float64(bounds.Max.X) / float64(resolution);
-    var propH float64 = float64(bounds.Max.Y) / float64(resolution);
 
-    var fragments [][]int = make([][]int, resolution*resolution);
-
-    var frag_i int = 0;
-    for y := 0; y < resolution; y++ {
-        for x := 0; x < resolution; x++ {
-            var sampleX int = ( int( propW / 2 ) * x );
-            var sampleY int = ( int( propH / 2 ) * y );
-
-            r, g, b, _ := img.At( sampleX, sampleY ).RGBA();
-
-            fragments[frag_i] = []int{ int( r>>8 ), int( g>>8 ), int( b>>8 ) };
-            frag_i++;
+    var spacing float64 = float64(bounds.Max.X) / float64(resolution);
+    var output = "";
+    for y := 0; y < bounds.Max.Y; y = y + int(spacing) {
+        for x := 0; x < bounds.Max.X; x = x + int(spacing/2) {
+            r, g, b, _ := img.At( x, y ).RGBA();
+            output = output + fmt.Sprintf( "%s \033[0m", toAnsii([]int{ int( r>>8 ), int( g>>8 ), int( b>>8 ) }) );
         }
+        output = output + "\n";
     }
 
-    var ansii []string = toAnsii( fragments );
-
-    for y := 0; y <= resolution; y++ {
-        for x := 0; x < resolution; x++ {
-            fmt.Printf( "%s \033[0m", ansii[x*y*1] );
-        }
-        fmt.Printf("\n");
-    }
-
-    return "hello";
+    return output;
 }
 
-func toAnsii ( fragments [][]int ) []string {
+func toAnsii ( colour []int ) string {
     var source map[int][]int = loadSource();
-    var ansii []string = make( []string, len( fragments ) );
 
-    for i := 0; i < len(fragments); i++ {
-        var closest int;
-        var chosen int;
+    var closest int;
+    var chosen int;
 
-        for n := 0; n < len(source); n++ {
-            var check int = getDist( fragments[i], source[n] );
-            if closest == 0 {
-                closest = check;
-                chosen = n;
-            } else if check < closest {
-                closest = check;
-                chosen = n;
-            }
+    for n := 0; n < len(source); n++ {
+        var check int = getDist( colour, source[n] );
+        if closest == 0 {
+            closest = check;
+            chosen = n;
+        } else if check < closest {
+            closest = check;
+            chosen = n;
         }
-
-        ansii[i] = fmt.Sprintf( "\033[48;5;%dm\033[38;5;%dm", chosen, chosen );
     }
 
-    return ansii;
+    return fmt.Sprintf( "\033[48;5;%dm\033[38;5;%dm", chosen, chosen );
 }
 
 func loadSource () map[int][]int {
