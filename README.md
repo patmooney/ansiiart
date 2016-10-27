@@ -8,6 +8,8 @@ Endless possibilities.
 
 *Image goes in - Ansii art comes out ( linux shell art! )*
 
+![Example image](doc/example.png)
+
 ### Usage: as an app
 
     # resolution is the amount of "pixels" rendered
