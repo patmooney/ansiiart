@@ -1,9 +1,12 @@
+// Package ansiiart is here to convert images of all popular types into the far
+// superious format of bash ansii art. Just think of the possibilities, have
+// your favourite kitten picture print out when you start a shell or even
+// use this package to make some sort of awesome shell based browser with images!
 package ansiiart;
 
 import (
     "image"
     "os"
-    "log"
     "io"
     "fmt"
     "strings"
@@ -17,35 +20,52 @@ import (
 
 var _source map[int][]int;
 
-func TransformFile ( filename string, resolution int ) string {
+// TransformFile accepts a filename (str) and resolution (int, 50 recommended)
+// The resolution dictates the accuracy of the render but also the size of the
+// outputted image.
+// Example
+//      ansiiart.TransformFile( "myImage.jpg", 49 );
+// The output is a string of unix bash text colour codes
+func TransformFile ( filename string, resolution int ) ( string, error ) {
     reader, err := os.Open(filename);
     defer reader.Close();
     if err != nil {
-        log.Fatal(err);
+        return "", err;
     }
 
     return Transform( reader, resolution );
 }
 
-func Transform ( reader io.Reader, resolution int ) string {
+// Transform is similar to TransformFile but accepts a io.Reader
+func Transform ( reader io.Reader, resolution int ) ( string, error ) {
     img, _, err := image.Decode(reader)
     if err != nil {
-        log.Fatal(err)
+        return "", err;
     }
 
     bounds := img.Bounds();
 
     var spacing float64 = float64(bounds.Max.X) / float64(resolution);
-    var output = "";
+    var output string = "";
+    var previousAnsii string = "";
+    // take samples from the source image and then map
+    // to the nearest RGB ansii colour
     for y := 0; y < bounds.Max.Y; y = y + int(spacing) {
         for x := 0; x < bounds.Max.X; x = x + int(spacing/2) {
             r, g, b, _ := img.At( x, y ).RGBA();
-            output = output + fmt.Sprintf( "%s \033[0m", toAnsii([]int{ int( r>>8 ), int( g>>8 ), int( b>>8 ) }) );
+            var ansii string = toAnsii([]int{ int( r>>8 ), int( g>>8 ), int( b>>8 ) });
+            if ( ansii == previousAnsii ){
+                output = output + " ";
+            } else {
+                output = output + fmt.Sprintf( "\033[0m%s ", ansii );
+                previousAnsii = ansii;
+            }
         }
-        output = output + "\n";
+        output = output + "\033[0m\n";
+        previousAnsii = "";
     }
 
-    return output;
+    return output, nil;
 }
 
 func toAnsii ( colour []int ) string {
@@ -93,8 +113,14 @@ func loadSource () map[int][]int {
     return _source;
 }
 
+// #pythag
 func getDist( a []int, b []int ) int {
-    dist := math.Pow( math.Pow( float64(a[0] - b[0]), 2 ) + math.Pow( float64(a[1] - b[1]), 2 ) + math.Pow( float64(a[2] - b[2]), 2 ), 0.5 );
+    dist := math.Pow(
+        math.Pow( float64(a[0] - b[0]), 2 ) +
+        math.Pow( float64(a[1] - b[1]), 2 ) +
+        math.Pow( float64(a[2] - b[2]), 2 ),
+        0.5,
+    );
     return int(dist);
 }
 
