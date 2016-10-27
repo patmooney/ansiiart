@@ -24,7 +24,7 @@ Endless possibilities.
 
     import (
         "fmt"
-        "github.com/patmooney/ansiiart"
+        "github.com/skinnyjeans/ansiiart"
     );
 
     func main () {
