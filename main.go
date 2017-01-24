@@ -1,7 +1,7 @@
 package main;
 
 import (
-    "github.com/patmooney/ansiiart/ansiiart"
+    "github.com/skinnyjeans/ansiiart/ansiiart"
     "fmt"
     "os"
     "log"
